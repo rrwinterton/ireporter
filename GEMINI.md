@@ -26,5 +26,5 @@ This repository contains `ireporter`, a telemetry reporter tool. It is built usi
 - When modifying Python scripts, ensure they are executed to verify the expected behavior and that telemetry is correctly reported.
 
 ## Common Workflows
-- **Building:** Run `cmake -B build` followed by `cmake --build build` to compile the C++ binaries.
+- **Building:** Run `cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=RelWithDebInfo` followed by `ninja -C build` to compile the C++ binaries.
 - **Execution:** Run the generated binary from the `build` directory to test telemetry reporting.
