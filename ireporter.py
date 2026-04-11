@@ -1,48 +1,72 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
+
+# State management (In-memory for now)
+STATE = {"enabled": True}
 
 # Ensure the output directory 'ireportjson' exists
 SAVE_DIR = os.path.join(os.path.dirname(__file__), 'ireportjson')
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
+@app.route('/')
+def index():
+    """Serve the dashboard home page."""
+    return render_template('index.html')
+
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    """Get the current enabled/disabled status."""
+    return jsonify(STATE)
+
+@app.route('/api/toggle', methods=['POST'])
+def toggle_status():
+    """Toggle the receiver state."""
+    STATE['enabled'] = not STATE['enabled']
+    return jsonify(STATE)
+
+@app.route('/api/files', methods=['GET'])
+def list_files():
+    """List all received JSON files with their metadata."""
+    files = []
+    for filename in os.listdir(SAVE_DIR):
+        if filename.endswith('.json'):
+            path = os.path.join(SAVE_DIR, filename)
+            stats = os.stat(path)
+            files.append({
+                "name": filename,
+                "size": f"{stats.st_size / 1024:.2f} KB",
+                "time": datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            })
+    # Sort by time descending
+    files.sort(key=lambda x: x['time'], reverse=True)
+    return jsonify(files)
+
 @app.route('/api/data', methods=['POST'])
 def handle_client_data():
-    # Ensure the incoming request contains JSON
+    """Handle incoming telemetry from the C++ client."""
+    if not STATE['enabled']:
+        return jsonify({"error": "Receiver is currently disabled"}), 503
+
     if request.is_json:
         data = request.get_json()
-        print(f"Received data from Windows client: {data}")
-        
-        # Create a unique filename based on the current timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         filename = f"report_{timestamp}.json"
         filepath = os.path.join(SAVE_DIR, filename)
 
-        # Save the JSON data to a file in the 'ireportjson' directory
         try:
             with open(filepath, 'w') as f:
                 json.dump(data, f, indent=4)
-            print(f"Data saved to {filepath}")
+            return jsonify({"status": "success", "file_saved": filename}), 200
         except Exception as e:
-            print(f"Error saving data: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
-
-        # Respond back to the client
-        response_payload = {
-            "status": "success",
-            "file_saved": filename,
-            "command": "continue_monitoring"
-        }
-        return jsonify(response_payload), 200
     else:
         return jsonify({"error": "Request must be JSON"}), 400
 
 if __name__ == '__main__':
-    # Use the port provided by HttpPlatformHandler (via the PORT env variable)
-    # or default to 5000 for local development.
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)

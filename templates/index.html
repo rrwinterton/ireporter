@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iReporter Telemetry Dashboard</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); margin: 0; padding: 2rem; }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
+
+        .status-card {
+            background: var(--card-bg); padding: 1.5rem; border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border);
+            margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .status-info { display: flex; align-items: center; gap: 0.75rem; }
+        .status-indicator { width: 12px; height: 12px; border-radius: 50%; }
+        .status-enabled { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-disabled { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+        .btn {
+            padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; border: none; font-size: 0.875rem;
+        }
+        .btn-toggle { background: var(--primary); color: white; }
+        .btn-toggle:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .file-list-card {
+            background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { margin: 0; font-size: 1.125rem; }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f1f5f9; padding: 0.75rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-sub); border-bottom: 1px solid var(--border); }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8fafc; }
+
+        .empty-state { padding: 3rem; text-align: center; color: var(--text-sub); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>iReporter Dashboard</h1>
+        </div>
+
+        <div class="status-card">
+            <div class="status-info">
+                <div id="statusIndicator" class="status-indicator"></div>
+                <div>
+                    <div id="statusLabel" style="font-weight: 600;">Loading...</div>
+                    <div style="font-size: 0.8rem; color: var(--text-sub);">Receiver State</div>
+                </div>
+            </div>
+            <button id="toggleBtn" class="btn btn-toggle" onclick="toggleStatus()">Toggle Receiver</button>
+        </div>
+
+        <div class="file-list-card">
+            <div class="card-header">
+                <h2>Telemetry Uploads</h2>
+                <button class="btn btn-toggle" style="background: none; color: var(--primary);" onclick="loadFiles()">Refresh List</button>
+            </div>
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Uploaded At</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody id="fileList">
+                    <!-- Files will be injected here -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                No telemetry data received yet.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            updateStatusUI(data.enabled);
+        }
+
+        async function toggleStatus() {
+            const res = await fetch('/api/toggle', { method: 'POST' });
+            const data = await res.json();
+            updateStatusUI(data.enabled);
+        }
+
+        function updateStatusUI(enabled) {
+            const label = document.getElementById('statusLabel');
+            const indicator = document.getElementById('statusIndicator');
+            const btn = document.getElementById('toggleBtn');
+            
+            label.innerText = enabled ? 'ENABLED' : 'DISABLED';
+            indicator.className = 'status-indicator ' + (enabled ? 'status-enabled' : 'status-disabled');
+            btn.innerText = enabled ? 'Disable Receiver' : 'Enable Receiver';
+            btn.style.background = enabled ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        async function loadFiles() {
+            const res = await fetch('/api/files');
+            const files = await res.json();
+            const list = document.getElementById('fileList');
+            const empty = document.getElementById('emptyState');
+            const table = document.getElementById('fileTable');
+
+            if (files.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+            list.innerHTML = files.map(f => `
+                <tr>
+                    <td style="font-family: monospace; color: var(--primary);">${f.name}</td>
+                    <td>${f.time}</td>
+                    <td>${f.size}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Initial load
+        fetchStatus();
+        loadFiles();
+
+        // Refresh file list every 10 seconds
+        setInterval(loadFiles, 10000);
+    </script>
+</body>
+</html>
