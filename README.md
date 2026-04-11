@@ -32,10 +32,10 @@ To host the receiver on IIS, you must use the **HttpPlatformHandler** module.
 
 1. **Install HttpPlatformHandler**: Download and install it from the official Microsoft site.
 2. **Configure IIS**:
-   - Create a new Website or Application in IIS pointing to the `ireporter` directory.
-   - Ensure the `web.config` file is present in the root.
-   - **Permissions**: Grant the IIS AppPool user (e.g., `IIS AppPool\YourSiteName`) **Write** permissions to the `ireporter` folder so it can create the `ireportjson` and `logs` directories.
-3. **Verify**: The receiver will automatically start on a port assigned by IIS and begin saving JSON files to `ireportjson/`.
+   - Create a new Virtual Application named `ireporter` under your Website pointing to the `ireporter` directory.
+   - Ensure the `web.config` file is present in the root of the `ireporter` directory.
+   - **Permissions**: Grant the IIS AppPool user (e.g., `IIS AppPool\DefaultAppPool`) **Full Control** over the `ireporter` folder.
+3. **Verify**: Access the dashboard at `http://localhost/ireporter/`. The receiver will automatically start on a port assigned by IIS.
 
 ### 2. Linux Server (Nginx + Gunicorn)
 On Linux, it is recommended to use Gunicorn as the application server and Nginx as a reverse proxy.

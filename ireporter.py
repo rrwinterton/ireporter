@@ -5,6 +5,9 @@ from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
+# from werkzeug.middleware.proxy_fix import ProxyFix
+# app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # State management (In-memory for now)
 STATE = {"enabled": True}
 
@@ -14,22 +17,26 @@ if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
 @app.route('/')
+@app.route('/ireporter/')
 def index():
     """Serve the dashboard home page."""
     return render_template('index.html')
 
 @app.route('/api/status', methods=['GET'])
+@app.route('/ireporter/api/status', methods=['GET'])
 def get_status():
     """Get the current enabled/disabled status."""
     return jsonify(STATE)
 
 @app.route('/api/toggle', methods=['POST'])
+@app.route('/ireporter/api/toggle', methods=['POST'])
 def toggle_status():
     """Toggle the receiver state."""
     STATE['enabled'] = not STATE['enabled']
     return jsonify(STATE)
 
 @app.route('/api/files', methods=['GET'])
+@app.route('/ireporter/api/files', methods=['GET'])
 def list_files():
     """List all received JSON files with their metadata."""
     files = []
@@ -47,6 +54,7 @@ def list_files():
     return jsonify(files)
 
 @app.route('/api/data', methods=['POST'])
+@app.route('/ireporter/api/data', methods=['POST'])
 def handle_client_data():
     """Handle incoming telemetry from the C++ client."""
     if not STATE['enabled']:
@@ -61,8 +69,10 @@ def handle_client_data():
         try:
             with open(filepath, 'w') as f:
                 json.dump(data, f, indent=4)
+            print(f"[SERVER] Received telemetry: {filename}")
             return jsonify({"status": "success", "file_saved": filename}), 200
         except Exception as e:
+            print(f"[SERVER] Error saving data: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
     else:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -70,3 +80,5 @@ def handle_client_data():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
+

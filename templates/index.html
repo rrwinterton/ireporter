@@ -100,13 +100,13 @@
 
     <script>
         async function fetchStatus() {
-            const res = await fetch('/api/status');
+            const res = await fetch('api/status');
             const data = await res.json();
             updateStatusUI(data.enabled);
         }
 
         async function toggleStatus() {
-            const res = await fetch('/api/toggle', { method: 'POST' });
+            const res = await fetch('api/toggle', { method: 'POST' });
             const data = await res.json();
             updateStatusUI(data.enabled);
         }
@@ -123,7 +123,7 @@
         }
 
         async function loadFiles() {
-            const res = await fetch('/api/files');
+            const res = await fetch('api/files');
             const files = await res.json();
             const list = document.getElementById('fileList');
             const empty = document.getElementById('emptyState');
@@ -151,8 +151,8 @@
         fetchStatus();
         loadFiles();
 
-        // Refresh file list every 10 seconds
-        setInterval(loadFiles, 10000);
+        // Refresh file list every 3 seconds
+        setInterval(loadFiles, 3000);
     </script>
 </body>
 </html>

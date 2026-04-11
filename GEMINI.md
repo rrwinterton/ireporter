@@ -27,4 +27,6 @@ This repository contains `ireporter`, a telemetry reporter tool. It is built usi
 
 ## Common Workflows
 - **Building (Clang/Ninja):** Run `cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=RelWithDebInfo` followed by `ninja -C build` to compile the C++ binaries.
-- **Execution:** Run the generated binary from the `build` directory to test telemetry reporting.
+- **IIS Deployment:** Copy `ireporter.py`, `web.config`, and `templates/` to `C:\inetpub\wwwroot\ireporter`. Ensure the folder is configured as an IIS Application.
+- **Dashboard Access:** Visit `http://localhost/ireporter/` to monitor and control the telemetry receiver.
+- **Client Execution:** Run the generated binary from the `build` directory to test telemetry reporting to the local IIS server.

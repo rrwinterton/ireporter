@@ -18,11 +18,11 @@ void SendSystemData() {
         return;
     }
 
-    // 2. Connect to the local web server on port 5000
-    HINTERNET hConnect = WinHttpConnect(hSession, L"127.0.0.1", 5000, 0);
+    // 2. Connect to the local web server on port 80 (Standard IIS/HTTP port)
+    HINTERNET hConnect = WinHttpConnect(hSession, L"localhost", 80, 0);
     if (hConnect) {
         // 3. Open a POST request to the specific API endpoint
-        HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/api/data",
+        HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/ireporter/api/data",
                                                 NULL, WINHTTP_NO_REFERER,
                                                 WINHTTP_DEFAULT_ACCEPT_TYPES,
                                                 0);
