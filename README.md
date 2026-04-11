@@ -4,9 +4,20 @@ A telemetry reporter tool with a high-performance C++ client and a Python-based 
 
 ## Project Structure
 - `ireporter.cpp`: C++ client that collects and sends telemetry data via WinHTTP.
-- `ireporter.py`: Flask-based receiver that saves telemetry data as JSON files.
+- `ireporter.py`: Flask-based receiver that saves telemetry data and serves the dashboard.
+- `templates/index.html`: Web dashboard UI for monitoring and control.
 - `ireportjson/`: Directory where received telemetry JSON files are stored.
 - `web.config`: Configuration for hosting the Python receiver on Windows IIS.
+
+## Web Dashboard
+The project includes a built-in web dashboard accessible at the root URL (e.g., `http://localhost:5000`).
+
+### Features:
+- **Telemetry Monitoring**: Automatically lists all received JSON files with their upload timestamps and file sizes.
+- **Receiver Control**: Includes an **Enable/Disable** toggle.
+  - **Enabled**: The server accepts and saves incoming POST requests from the C++ client.
+  - **Disabled**: The server rejects incoming telemetry with a `503 Service Unavailable` error, allowing you to pause data collection without stopping the server process.
+- **Auto-Refresh**: The file list refreshes every 10 seconds to show new uploads in real-time.
 
 ## Prerequisites
 - **Python 3.x**
