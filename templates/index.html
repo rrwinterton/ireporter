@@ -21,7 +21,7 @@
 
         .container { max-width: 900px; margin: 0 auto; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }    
         .header h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
 
         .status-card {
@@ -72,7 +72,7 @@
                     <div style="font-size: 0.8rem; color: var(--text-sub);">Receiver State</div>
                 </div>
             </div>
-            <button id="toggleBtn" class="btn btn-toggle" onclick="toggleStatus()">Toggle Receiver</button>
+            <button id="toggleBtn" class="btn btn-toggle" onclick="toggleStatus()">Toggle Receiver</button>     
         </div>
 
         <div class="file-list-card">
@@ -99,15 +99,43 @@
     </div>
 
     <script>
+        /**
+         * Cleans the response from the server, which sometimes appends 
+         * extra headers to the end of the JSON on Network Solutions.
+         */
+        async function fetchCleanJSON(url, options = {}) {
+            const res = await fetch(url, options);
+            const rawText = await res.text();
+            
+            // Look for the first complete JSON object/array
+            // This handles cases where extra text is appended after the JSON
+            try {
+                // Find the first matching pair of brackets
+                const firstBrace = rawText.indexOf('{');
+                const lastBrace = rawText.lastIndexOf('}');
+                const cleanJSON = rawText.substring(firstBrace, lastBrace + 1);
+                return JSON.parse(cleanJSON);
+            } catch (e) {
+                // If it's an array
+                const firstBracket = rawText.indexOf('[');
+                const lastBracket = rawText.lastIndexOf(']');
+                const cleanJSON = rawText.substring(firstBracket, lastBracket + 1);
+                return JSON.parse(cleanJSON);
+            }
+        }
+
         async function fetchStatus() {
-            const res = await fetch('api/status');
-            const data = await res.json();
-            updateStatusUI(data.enabled);
+            try {
+                const data = await fetchCleanJSON('api/status');
+                updateStatusUI(data.enabled);
+            } catch (e) {
+                console.error("Status check failed:", e);
+                document.getElementById('statusLabel').innerText = "ERROR";
+            }
         }
 
         async function toggleStatus() {
-            const res = await fetch('api/toggle', { method: 'POST' });
-            const data = await res.json();
+            const data = await fetchCleanJSON('api/toggle', { method: 'POST' });
             updateStatusUI(data.enabled);
         }
 
@@ -115,36 +143,39 @@
             const label = document.getElementById('statusLabel');
             const indicator = document.getElementById('statusIndicator');
             const btn = document.getElementById('toggleBtn');
-            
+
             label.innerText = enabled ? 'ENABLED' : 'DISABLED';
-            indicator.className = 'status-indicator ' + (enabled ? 'status-enabled' : 'status-disabled');
+            indicator.className = 'status-indicator ' + (enabled ? 'status-enabled' : 'status-disabled');       
             btn.innerText = enabled ? 'Disable Receiver' : 'Enable Receiver';
             btn.style.background = enabled ? 'var(--danger)' : 'var(--primary)';
         }
 
         async function loadFiles() {
-            const res = await fetch('api/files');
-            const files = await res.json();
-            const list = document.getElementById('fileList');
-            const empty = document.getElementById('emptyState');
-            const table = document.getElementById('fileTable');
+            try {
+                const files = await fetchCleanJSON('api/files');
+                const list = document.getElementById('fileList');
+                const empty = document.getElementById('emptyState');
+                const table = document.getElementById('fileTable');
 
-            if (files.length === 0) {
-                list.innerHTML = '';
-                empty.style.display = 'block';
-                table.style.display = 'none';
-                return;
+                if (!files || files.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    table.style.display = 'none';
+                    return;
+                }
+
+                empty.style.display = 'none';
+                table.style.display = 'table';
+                list.innerHTML = files.map(f => `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--primary);">${f.name}</td>
+                        <td>${f.time}</td>
+                        <td>${f.size}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Load files failed:", e);
             }
-
-            empty.style.display = 'none';
-            table.style.display = 'table';
-            list.innerHTML = files.map(f => `
-                <tr>
-                    <td style="font-family: monospace; color: var(--primary);">${f.name}</td>
-                    <td>${f.time}</td>
-                    <td>${f.size}</td>
-                </tr>
-            `).join('');
         }
 
         // Initial load

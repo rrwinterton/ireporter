@@ -1,3 +1,6 @@
+#!/usr/bin/python
+print("Content-type: text/html\n\n")
+
 import os
 import json
 from datetime import datetime

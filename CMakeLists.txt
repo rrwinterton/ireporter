@@ -4,4 +4,4 @@ project(QuickBuild CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Define the executable
-add_executable(ireporter ireporter.cpp)
+add_executable(ireporter main.cpp ireporter.cpp)

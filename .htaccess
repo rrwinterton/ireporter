@@ -1,0 +1,17 @@
+# 1. Enable Rewrite Engine
+RewriteEngine On
+RewriteBase /ireporter/
+
+# 2. Add Handler for Python as CGI
+# Some hosts require this explicitly for .py or .cgi files
+AddHandler cgi-script .cgi
+
+# 3. Handle Flask Routing
+# If the requested filename is not an existing file, pass it to the CGI script
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ ireporter.cgi/$1 [QSA,L]
+
+# 4. Disable Directory Listing
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>

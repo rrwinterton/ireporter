@@ -1,3 +1,4 @@
+#include "ireporter.h"
 #include <windows.h>
 #include <winreg.h>
 #include <winhttp.h>
@@ -53,14 +54,14 @@ void SendSystemData() {
         return;
     }
 
-    // 2. Connect to the local web server on port 80 (Standard IIS/HTTP port)
-    HINTERNET hConnect = WinHttpConnect(hSession, L"localhost", 80, 0);
+    // 2. Connect to the remote web server on port 443 (HTTPS)
+    HINTERNET hConnect = WinHttpConnect(hSession, L"rrwinterton.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
     if (hConnect) {
-        // 3. Open a POST request to the specific API endpoint
+        // 3. Open a POST request to the specific API endpoint over HTTPS
         HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/ireporter/api/data",
                                                 NULL, WINHTTP_NO_REFERER,
                                                 WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                                0);
+                                                WINHTTP_FLAG_SECURE);
         if (hRequest) {
             // 4. Retrieve identity information and prepare the JSON payload
             std::string machineName = GetMachineName();
@@ -97,7 +98,3 @@ void SendSystemData() {
     WinHttpCloseHandle(hSession);
 }
 
-int main() {
-    SendSystemData();
-    return 0;
-}
