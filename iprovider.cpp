@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstring>
 #include "api_exports.h"
+#include "upload_engine.h"
 
 // --- Helper for string allocation in Config structs ---
 char* DuplicateString(const char* src) {
@@ -171,6 +172,48 @@ API_EXPORT const char* PerfEngine_GetLastResult(EngineHandle handle) {
 
 API_EXPORT void DestroyPerfEngine(EngineHandle handle) {}
 
+// --- UploadEngine Implementation ---
+API_EXPORT bool UploadEngine_ParseConfig(int argc, char** argv, UploadEngine_Config* outConfig) {
+  if (!outConfig) return false;
+  strcpy(outConfig->location, "C:\\Temp");
+  strcpy(outConfig->url, "http://localhost/upload");
+  strcpy(outConfig->filePath, "data.txt");
+
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--upload-location") == 0 && i + 1 < argc) {
+      strcpy(outConfig->location, argv[++i]);
+    } else if (strcmp(argv[i], "--upload-url") == 0 && i + 1 < argc) {
+      strcpy(outConfig->url, argv[++i]);
+    } else if (strcmp(argv[i], "--upload-file") == 0 && i + 1 < argc) {
+      strcpy(outConfig->filePath, argv[++i]);
+    }
+  }
+  return true;
+}
+
+API_EXPORT EngineHandle CreateUploadEngine() {
+  return new UploadEngine();
+}
+
+API_EXPORT void UploadEngine_SetServerConfig(EngineHandle handle, const char* location, const char* url) {
+  if (handle) {
+    static_cast<UploadEngine*>(handle)->SetServerConfig(location, url);
+  }
+}
+
+API_EXPORT bool UploadEngine_UploadFile(EngineHandle handle, const char* filePath) {
+  if (handle) {
+    return static_cast<UploadEngine*>(handle)->UploadFile(filePath);
+  }
+  return false;
+}
+
+API_EXPORT void DestroyUploadEngine(EngineHandle handle) {
+  if (handle) {
+    delete static_cast<UploadEngine*>(handle);
+  }
+}
+
 // --- API Table Implementation ---
 static const IProviderAPI globalApiTable = {
     CreateMathEngine,
@@ -191,7 +234,12 @@ static const IProviderAPI globalApiTable = {
     PerfEngine_StopTrace,
     PerfEngine_IsRecording,
     PerfEngine_GetLastResult,
-    DestroyPerfEngine
+    DestroyPerfEngine,
+    UploadEngine_ParseConfig,
+    CreateUploadEngine,
+    UploadEngine_SetServerConfig,
+    UploadEngine_UploadFile,
+    DestroyUploadEngine
 };
 
 API_EXPORT const IProviderAPI* GetIProviderAPI() {

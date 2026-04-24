@@ -21,10 +21,11 @@ void RunCompressEngine(const std::vector<std::string>& inputs,
                         const std::string& output,
                         const std::vector<std::string>& archives);
 void RunPerfEngine(const std::string& profileName,
-
-                   const std::string& profileLevel,
-                   unsigned int duration,
+                   const std::string& profileLevel, unsigned int duration,
                    const std::string& etlFileName);
+bool ValidateUploadConfig(int argc, char** argv);
+void RunUploadEngine(const std::string& location, const std::string& url, const std::string& filePath);
+
 void SendSystemData();
 
 #endif  // IREPORTER_H

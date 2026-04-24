@@ -140,6 +140,22 @@ void RunCompressEngine(const std::vector<std::string>& inputs, const std::string
   }
 }
 
+bool ValidateUploadConfig(int argc, char** argv) {
+  if (!g_pApi || !g_pApi->UploadEngine_ParseConfig) return false;
+  UploadEngine_Config config;
+  return g_pApi->UploadEngine_ParseConfig(argc, argv, &config);
+}
+
+void RunUploadEngine(const std::string& location, const std::string& url, const std::string& filePath) {
+  if (!g_pApi || !g_pApi->CreateUploadEngine) return;
+  EngineHandle handle = g_pApi->CreateUploadEngine();
+  if (handle) {
+    g_pApi->UploadEngine_SetServerConfig(handle, location.c_str(), url.c_str());
+    g_pApi->UploadEngine_UploadFile(handle, filePath.c_str());
+    g_pApi->DestroyUploadEngine(handle);
+  }
+}
+
 std::string GetMachineName() {
   char buffer[MAX_COMPUTERNAME_LENGTH + 1];
   DWORD size = sizeof(buffer);

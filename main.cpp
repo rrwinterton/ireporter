@@ -1,6 +1,7 @@
 #include <iostream>
 #include "CLI.hpp"
 #include "ireporter.h"
+#include "upload_engine.h"
 
 int main(int argc, char* argv[]) {
   CLI::App app{"Telemetry Reporter"};
@@ -24,8 +25,7 @@ int main(int argc, char* argv[]) {
   app.add_option("--sw-duration", swDuration,
                  "Duration for SocwatchEngine (seconds)")
       ->default_val(30);
-  app.add_option("--sw-output", swOutput,
-                 "Output filename for SocwatchEngine")
+  app.add_option("--sw-output", swOutput, "Output filename for SocwatchEngine")
       ->default_val("socwatch.csv");
 
   bool runPerf = false;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   app.add_option("--etlFile", etlFileName, "ETL filename for PerfEngine")
       ->default_val("trace.etl");
 
-      bool runCompress = false;
+  bool runCompress = false;
   std::vector<std::string> compressInputs;
   std::string compressOutput = "archive.zip";
   std::vector<std::string> compressArchives;
@@ -56,6 +56,19 @@ int main(int argc, char* argv[]) {
       ->default_val("archive.zip");
   app.add_option("--compress-archive", compressArchives,
                  "Archive names for CompressEngine");
+
+  bool runUpload = false;
+  std::string uploadLocation = "rrwinterton.com";
+  std::string uploadUrl = "/ireporter/ireporter.cgi/upload";
+  std::string uploadFile = "archive.zip";
+  app.add_flag("--upload", runUpload, "Run the UploadEngine");
+  app.add_option("--upload-location", uploadLocation,
+                 "Server location for UploadEngine")
+      ->default_val("rrwinterton.com");
+  app.add_option("--upload-url", uploadUrl, "Server URL for UploadEngine")
+      ->default_val("/ireporter/ireporter.cgi/upload");
+  app.add_option("--upload-file", uploadFile, "File to upload for UploadEngine")
+      ->default_val("archive.zip");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -73,17 +86,9 @@ int main(int argc, char* argv[]) {
     std::cerr << "Invalid CompressEngine configuration." << std::endl;
     return 1;
   }
-  if (runMath) {
-    RunMathEngine(multiplier, mathInput);
-  }
-  if (runSocwatch) {
-    RunSocwatchEngine(swDuration, swOutput);
-  }
-  if (runPerf) {
-    RunPerfEngine(profileName, profileLevel, perfDuration, etlFileName);
-  }
-  if (runCompress) {
-    RunCompressEngine(compressInputs, compressOutput, compressArchives);
+  if (runUpload && !ValidateUploadConfig(argc, argv)) {
+    std::cerr << "Invalid UploadEngine configuration." << std::endl;
+    return 1;
   }
 
   std::cout << "Starting Telemetry Reporter..." << std::endl;
@@ -101,5 +106,22 @@ int main(int argc, char* argv[]) {
     std::cout << "Sending system data..." << std::endl;
     SendSystemData();
   }
+
+  if (runMath) {
+    RunMathEngine(multiplier, mathInput);
+  }
+  if (runSocwatch) {
+    RunSocwatchEngine(swDuration, swOutput);
+  }
+  if (runPerf) {
+    RunPerfEngine(profileName, profileLevel, perfDuration, etlFileName);
+  }
+  if (runCompress) {
+    RunCompressEngine(compressInputs, compressOutput, compressArchives);
+  }
+  if (runUpload) {
+    RunUploadEngine(uploadLocation, uploadUrl, uploadFile);
+  }
+
   return 0;
 }

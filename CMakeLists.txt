@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(. CLI)
 
 # Define the shared library
-add_library(iprovider SHARED iprovider.cpp)
+add_library(iprovider SHARED iprovider.cpp upload_engine.cpp)
 target_compile_definitions(iprovider PRIVATE UNMANGLED_LIB_EXPORTS)
 
 # Define the executable
