@@ -188,6 +188,13 @@ void SendSystemData() {
   if (hConnect) {
     HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/ireporter/api/data", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     if (hRequest) {
+      // Ignore SSL errors for test purposes
+      DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | 
+                      SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE | 
+                      SECURITY_FLAG_IGNORE_CERT_CN_INVALID | 
+                      SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+      WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags));
+
       std::string machineName = GetMachineName();
       std::string machineGuid = GetMachineGuid();
       uint64_t uptime = GetMachineUptime();

@@ -125,9 +125,10 @@ API_EXPORT void DestroyPerfEngine(EngineHandle handle);
 
 // 23a. Configuration struct for UploadEngine
 typedef struct {
-    char location[260];
-    char url[260];
-    char filePath[260];
+    bool doUpload;
+    char serverLocation[260];
+    char serverUrl[260];
+    char uploadFile[260];
 } UploadEngine_Config;
 
 // 23b. Function to parse command line arguments for UploadEngine
@@ -136,7 +137,7 @@ API_EXPORT bool UploadEngine_ParseConfig(int argc, char** argv, UploadEngine_Con
 // 23. Function to create the UploadEngine
 API_EXPORT EngineHandle CreateUploadEngine();
 
-// 24. Function to set server configuration
+// 24. Function to configure the server
 API_EXPORT void UploadEngine_SetServerConfig(EngineHandle handle, const char* location, const char* url);
 
 // 25. Function to upload a file

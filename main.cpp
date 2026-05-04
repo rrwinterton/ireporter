@@ -1,7 +1,6 @@
 #include <iostream>
 #include "CLI.hpp"
 #include "ireporter.h"
-#include "upload_engine.h"
 
 int main(int argc, char* argv[]) {
   CLI::App app{"Telemetry Reporter"};
